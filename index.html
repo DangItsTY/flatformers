@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>hello phaser!</title>
+        <script src="phaser.min.js"></script>
+        <style>
+          body {
+            margin: 0px;
+          }
+          .centercontainer {
+            width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          .hudcontainer {
+            position: absolute;
+            top: 0px;
+            color: white;
+            font-size: 20pt;
+            padding: 10px;
+          }
+        </style>
+    </head>
+    <body>
+      <div id="gamewrapper" class="centercontainer">
+        <div id="gamecontainer"></div>
+        <div id="hud" class="hudcontainer">
+          <span id="score_label">Score: </span><span id="score_value">0</span>
+        </div>
+      </div>
+
+    <script type="text/javascript">
+
+    window.onload = function() {
+      /**
+       * Generated from the Phaser Sandbox
+       *
+       * //phaser.io/sandbox/wdCdiRdM
+       *
+       * This source requires Phaser 2.6.2
+       */
+
+      var game = new Phaser.Game(800, 450, Phaser.AUTO, 'gamecontainer', { preload: preload, create: create, update: update, render: render });
+
+      function preload() {
+          game.stage.backgroundColor = '#85b5e1';
+
+          game.load.baseURL = 'http://examples.phaser.io/assets/';
+          game.load.crossOrigin = 'anonymous';
+
+          game.load.image('player', 'sprites/phaser-dude.png');
+          game.load.image('platform', 'sprites/platform.png');
+          game.load.image('flatformer', 'sprites/space-baddie-purple.png');
+      }
+
+      var player;
+      var platforms;
+      var flatformers;
+      var flatformers_platforms;
+      var cursors;
+      var jumpButton;
+      var BLOCKSIZE = 25
+      var SCREENWIDTH = 800;
+      var SCREENHEIGHT = 450;
+
+      function create() {
+          player = game.add.sprite(100, 200, 'player');
+          game.physics.arcade.enable(player);
+          player.body.collideWorldBounds = true;
+          player.body.gravity.y = 500;
+          player.body.maxVelocity.x = 175;
+          player.dataJump = 3;
+          player.dataJumpMax = 3;
+          player.dataJumpLock = false;
+          player.height = BLOCKSIZE;
+          player.width = BLOCKSIZE;
+
+          platforms = game.add.physicsGroup();
+          platforms.create(0, 512, 'platform');
+          platforms.create(400, 512, 'platform');
+          platforms.width = 800;
+          platforms.height = BLOCKSIZE * 2;
+          platforms.setAll('body.immovable', true);
+
+          flatformers = game.add.physicsGroup();
+          flatformers_platforms = game.add.physicsGroup();
+          makeFlatformer();
+
+          cursors = game.input.keyboard.createCursorKeys();
+          jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+          leftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
+          rightButton = game.input.keyboard.addKey(Phaser.Keyboard.D);
+      }
+
+      function makeFlatformer()
+      {
+          var num = Math.floor(Math.random() * 2);
+          flatformer = game.add.sprite(num * 800, BLOCKSIZE, 'flatformer');
+          game.physics.arcade.enable(flatformer);
+          flatformer.smoothed = false;
+          flatformer.body.collideWorldBounds = true;
+          flatformer.body.gravity.y = 75;
+          flatformer.body.velocity.x = 75;
+          flatformer.body.bounce.x = 1.0;
+          flatformer.body.bounce.y = 1.0;
+          flatformer.width = BLOCKSIZE * 2;
+          flatformer.height = BLOCKSIZE * 2;
+          flatformers.add(flatformer);
+
+          flatformer_platform = game.add.sprite(0, BLOCKSIZE, 'platform');
+          game.physics.arcade.enable(flatformer_platform);
+          flatformer_platform.alpha = 0;
+          flatformer_platform.width = BLOCKSIZE * 2;
+          flatformer_platform.height = BLOCKSIZE * 2;
+          flatformer_platform.body.immovable = true;
+          flatformer_platform.dataOwner = flatformer;
+          flatformers_platforms.add(flatformer_platform);
+      }
+
+      var FRICTION = 20;
+      var playerscore = 0;
+      var pointerMove;
+      var pointerJump;
+      var pointerMoveIsLeft = false;
+      var pointerMoveIsRight = false;
+
+      function update () {
+          pointerMove = game.input.pointer1;
+          pointerJump = game.input.pointer2;
+          if (pointerMove.x > SCREENWIDTH / 2) {
+            var tempPointer = pointerJump;
+            pointerJump = pointerMove;
+            pointerMove = tempPointer;
+            //playerscore = 99; score*
+          } else {
+            //playerscore = pointerMove.x - pointerMove.positionDown.x; score*
+          }
+          if (pointerMove.isDown && pointerMove.x - pointerMove.positionDown.x < 0) {
+            pointerMoveIsLeft = true;
+            pointerMoveIsRight = false;
+          } else if (pointerMove.isDown && pointerMove.x - pointerMove.positionDown.x > 0) {
+            pointerMoveIsRight = true;
+            pointerMoveIsLeft = false;
+          } else {
+            pointerMoveIsLeft = false;
+            pointerMoveIsRight = false;
+          }
+          //document.getElementById("score_value").innerHTML = playerscore; score*
+
+
+
+
+          game.physics.arcade.collide(player, platforms);
+          game.physics.arcade.collide(flatformers, platforms);
+          game.physics.arcade.collide(player, flatformers_platforms, collideFlatformer);
+          if (cursors.left.isDown || leftButton.isDown || pointerMoveIsLeft)
+          {
+              player.body.acceleration.x = -250;
+              if (player.body.velocity.x > 0)
+              {
+                  player.body.velocity.x += -FRICTION*2;
+              }
+          }
+          else if (cursors.right.isDown || rightButton.isDown || pointerMoveIsRight)
+          {
+              player.body.acceleration.x = 250;
+              if (player.body.velocity.x < 0)
+              {
+                  player.body.velocity.x += FRICTION*2;
+              }
+          }
+          else
+          {
+              if (player.body.velocity.x > FRICTION)
+              {
+                  player.body.velocity.x -= FRICTION;
+              }
+              else if (player.body.velocity.x < -FRICTION)
+              {
+                  player.body.velocity.x -= -FRICTION;
+              }
+              else
+              {
+                  player.body.acceleration.x = 0;
+                  player.body.velocity.x = 0;
+              }
+          }
+
+          if ((jumpButton.isDown || pointerJump.isDown) && player.dataJump > 0 && !player.dataJumpLock)
+          {
+              player.body.velocity.y = -300;
+              player.dataJump -= 1;
+              player.dataJumpLock = true;
+          }
+
+          if (jumpButton.isUp && pointerJump.isUp)
+          {
+              player.dataJumpLock = false;
+
+              if (player.body.onFloor() || player.body.touching.down)
+              {
+                  player.dataJump = player.dataJumpMax;
+              }
+          }
+
+          flatformers_platforms.forEach(function(obj)
+          {
+              obj.position = obj.dataOwner.position;
+          }, this);
+      }
+
+      function collideFlatformer(paramPlayer, paramFlatformerPlatform)
+      {
+          if ((jumpButton.isDown || pointerJump.isDown) && (player.body.onFloor() || player.body.touching.down))
+          {
+              paramFlatformerPlatform.dataOwner.destroy();
+              paramFlatformerPlatform.destroy();
+
+              makeFlatformer();
+              score();
+          }
+      }
+
+      function score() {
+        playerscore += 1;
+
+        document.getElementById("score_value").innerHTML = playerscore;
+      }
+
+      function spawner() {
+        makeFlatformer();
+      }
+      var spawnerTimer = setInterval(spawner, 5000);
+
+
+      function render () {
+
+      }
+
+    };
+
+    </script>
+
+    </body>
+</html>
