@@ -44,14 +44,15 @@
       var game = new Phaser.Game(800, 450, Phaser.AUTO, 'gamecontainer', { preload: preload, create: create, update: update, render: render });
 
       function preload() {
-          game.stage.backgroundColor = '#85b5e1';
+          //game.stage.backgroundColor = '#85b5e1';
+          game.stage.backgroundColor = '#000000';
 
-          game.load.baseURL = 'http://examples.phaser.io/assets/';
-          game.load.crossOrigin = 'anonymous';
+          // game.load.baseURL = 'http://examples.phaser.io/assets/';
+          // game.load.crossOrigin = 'anonymous';
 
-          game.load.image('player', 'sprites/phaser-dude.png');
-          game.load.image('platform', 'sprites/platform.png');
-          game.load.image('flatformer', 'sprites/space-baddie-purple.png');
+          game.load.image('player', 'player.png');
+          game.load.image('platform', 'grass.png');
+          game.load.image('flatformer', 'alien.png');
       }
 
       var player;
@@ -63,6 +64,7 @@
       var BLOCKSIZE = 25
       var SCREENWIDTH = 800;
       var SCREENHEIGHT = 450;
+      var SCREENWIDTHINBLOCKS = SCREENWIDTH / BLOCKSIZE;
 
       function create() {
           player = game.add.sprite(100, 200, 'player');
@@ -77,11 +79,12 @@
           player.width = BLOCKSIZE;
 
           platforms = game.add.physicsGroup();
-          platforms.create(0, 512, 'platform');
-          platforms.create(400, 512, 'platform');
-          platforms.width = 800;
-          platforms.height = BLOCKSIZE * 2;
+          for (var i = 0; i < (SCREENWIDTHINBLOCKS / 2); i++) {
+            platforms.create((BLOCKSIZE * 2) * i, SCREENHEIGHT - (BLOCKSIZE * 2), 'platform');
+          }
           platforms.setAll('body.immovable', true);
+          platforms.setAll('width', BLOCKSIZE * 2);
+          platforms.setAll('height', BLOCKSIZE * 2);
 
           flatformers = game.add.physicsGroup();
           flatformers_platforms = game.add.physicsGroup();
